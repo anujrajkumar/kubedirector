@@ -1,19 +1,4 @@
-resources:
-  - name: repo_kubedirector
-    type: GitRepo
-    configuration:
-      gitProvider: anujgithub
-      path: anujrajkumar/kubedirector
-      branches:
-         include: ^{{gitBranch}}$
-      buildOn:
-        commit: true
-#         pullRequestCreate: true
-#       cancelPendingRunsOn:
-#          newCommit: false
-#          pullRequestUpdate: true
-#       pullRequestTargetBranches:
-#         include: ^{{gitBranch}}$
+
 
 pipelines:
   - name: kubedirector_poc
