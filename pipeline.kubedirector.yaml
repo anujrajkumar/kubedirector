@@ -1,4 +1,14 @@
-
+resources:
+  - name: repo_kubedirector
+    type: GitRepo
+    configuration:
+      gitProvider: anujgithub
+      path: anujrajkumar/kubedirector
+      branches:
+         include: ^{{gitBranch}}$
+      buildOn:
+        commit: true
+        
 pipelines:
   - name: kubedirector_poc
     configuration:
