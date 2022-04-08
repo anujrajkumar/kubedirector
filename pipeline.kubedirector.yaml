@@ -16,7 +16,7 @@ resources:
         include: ^{{gitBranch}}$
 
 pipelines:
-  - name: kubdirector_poc
+  - name: kubedirector_poc
     configuration:
       nodePool: AJNodes
       environmentVariables:
