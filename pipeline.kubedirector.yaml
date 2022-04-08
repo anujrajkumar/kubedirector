@@ -8,6 +8,7 @@ resources:
          include: ^{{gitBranch}}$
       buildOn:
         commit: true
+        pullRequestCreate: true
         
 pipelines:
   - name: kubedirector_poc
