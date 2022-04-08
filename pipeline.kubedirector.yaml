@@ -31,6 +31,7 @@ pipelines:
         #   affinityGroup: hpecp_agent
           inputResources:
             - name: repo_kubedirector
+              trigger: true
           runtime:
             type: image
             image:
