@@ -49,6 +49,7 @@ pipelines:
           #   - send_notification ezmeral_slack --text "Initiating ${pipeline_name}" --recipient "#cp-devops"
           #   - update_commit_status repo_hpecp_agent --message "$pipeline_name started...." --context "$pipeline_name"
           onExecute:
+            - echo "scanning"
             - pushd $res_repo_kubedirector_resourcePath
             - /usr/bin/jf config add --url=http://bd-jfrog-artifactory.mip.storage.hpecorp.net --interactive=false --access-token $int_xray_token
             - /usr/bin/jf audit --watches 'test_watch' > static_code_analysis_report
