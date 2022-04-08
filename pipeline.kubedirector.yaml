@@ -1,0 +1,131 @@
+resources:
+  - name: repo_kubedirector
+    type: GitRepo
+    configuration:
+      gitProvider: anujgithub
+      path: anujrajkumar/kubedirector
+      branches:
+         include: ^{{gitBranch}}$
+      buildOn:
+        commit: true
+        pullRequestCreate: true
+      cancelPendingRunsOn:
+         newCommit: false
+         pullRequestUpdate: true
+      pullRequestTargetBranches:
+        include: ^{{gitBranch}}$
+
+pipelines:
+  - name: kubedirector_poc
+    configuration:
+      nodePool: AJNodes
+      environmentVariables:
+        readOnly:
+          harborRegistry: "bd-harbor-registry.mip.storage.hpecorp.net"
+          harborProject: "develop"
+          jfrogRegistry: "bd-jfrog-artifactory.mip.storage.hpecorp.net:80"
+          jfrogProject: "develop"
+      integrations:
+        - name: notifySMTP
+        - name: jfrog
+        - name: ezmeral_slack
+        - name: xray
+    steps:
+      - name: Scan
+        type: Bash
+        configuration:
+        #   affinityGroup: hpecp_agent
+          inputResources:
+            - name: repo_kubedirector
+          runtime:
+            type: image
+            image:
+              custom:
+                name: releases-docker.jfrog.io/jfrog/pipelines-c7go
+                tag: "1.17"
+                options: "-v /usr/bin/jf:/usr/bin/jf"
+        execution:
+          # onStart:
+          #   - send_notification ezmeral_slack --text "Initiating ${pipeline_name}" --recipient "#cp-devops"
+          #   - update_commit_status repo_hpecp_agent --message "$pipeline_name started...." --context "$pipeline_name"
+          onExecute:
+            - echo "Starting the scan"
+            - pushd $res_repo_kubedirector_resourcePath
+            - /usr/bin/jf config add --url=http://bd-jfrog-artifactory.mip.storage.hpecorp.net --interactive=false --access-token $int_xray_token
+            - /usr/bin/jf audit --watches 'test_watch' > static_code_analysis_report
+            - add_run_files static_code_analysis_report sast_report
+          # onFailure:
+          #   - update_commit_status repo_hpecp_agent --message "$step_name failed...." --context "$step_name"
+          #   - send_notification ezmeral_slack '--text "${step_name} - failed" --recipient "#cp-devops"'
+          #   - send_notification notifySMTP --recipients ${res_repo_hpecp_agent_lastAuthorEmail} --subject "$step_name failed" --body "<b>$pipeline_name pipeline failed at stage - ${step_name} </b>"
+          #   - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then send_notification notifySMTP --recipients ez-devops@hpe.com --subject "$step_name failed" --body "<b>$pipeline_name pipeline failed at stage - ${step_name} </b>"; fi
+
+      - name: Build
+        type: Bash
+        configuration:
+          # chronological: true
+          # affinityGroup: hpecp_agent
+          inputResources:
+            - name: repo_kubedirector
+              trigger: false
+          inputSteps: 
+            - name: Scan
+          runtime:
+            type: image
+            image:
+              custom:
+                name: releases-docker.jfrog.io/jfrog/pipelines-c7go
+                tag: "1.17"
+                options: "-v /usr/bin/jf:/usr/bin/jf"
+        execution:
+          onExecute:
+           - cd $res_repo_kubedirector_resourcePath/ && make build
+          #  - export DEV_REPO="" && export RELEASE_HPECPAGENT_VERSION="" && source VERSIONFILE
+          #  - image=hpecp-agent:${RELEASE_HPECPAGENT_VERSION}-${res_repo_hpecp_agent_commitSha:0:7}
+          #  - add_run_variables DEV_REPO=$DEV_REPO && add_run_variables image=$image
+          #  - /usr/bin/jf config add --url=http://bd-jfrog-artifactory.mip.storage.hpecorp.net --interactive=false --access-token $int_xray_token
+          #  - /usr/bin/jf docker scan $DEV_REPO/$image > image_scan_report
+          #  - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then docker tag $DEV_REPO/$image $jfrogRegistry/$jfrogProject/bluedata/$image && /usr/bin/jf rt dp $jfrogRegistry/$jfrogProject/bluedata/$image $jfrogProject --build-name="hpecp-agent" --build-number="${run_number}"; fi
+          #  - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then /usr/bin/jf rt bp "hpecp-agent" "${run_number}" && /usr/bin/jf rt bs "hpecp-agent" "${run_number}"; fi
+          #  - add_run_files image_scan_report scan_report
+      #     onFailure:
+      #       - restore_run_files sast_report static_code_analysis_report 
+      #       - update_commit_status repo_hpecp_agent --message "Build failed...." --context "$pipeline_name"            
+      #       - send_notification notifySMTP --recipients ${res_repo_hpecp_agent_lastAuthorEmail} --subject "Build failed" --body "<b>$pipeline_name pipeline failed at stage - ${step_name} </b>" --attachments static_code_analysis_report
+      #       - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then send_notification ezmeral_slack '--text " $pipeline_name failed...." --recipient "#cp-devops"'; fi
+      #       - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then send_notification notifySMTP --recipients ez-devops@hpe.com --subject "$step_name failed" --body "<b>$pipeline_name pipeline failed at stage - ${step_name} </b>"; fi
+
+      # - name: Publish
+      #   type: Bash
+      #   configuration:
+      #     chronological: true
+      #     affinityGroup: hpecp_agent
+      #     inputResources:
+      #       - name: repo_hpecp_agent
+      #         trigger: false
+      #     inputSteps: 
+      #       - name: Build
+      #     runtime:
+      #       type: image
+      #       image:
+      #         custom:
+      #           name: releases-docker.jfrog.io/jfrog/pipelines-c7go
+      #           tag: "1.17"
+      #           options: "-v /root/.docker/config.json:/root/.docker/config.json"
+      #   execution:
+      #     onExecute:
+      #      - restore_run_files scan_report image_scan_report.log
+      #      - restore_run_files sast_report static_code_analysis_report.log
+      #      - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then docker tag $DEV_REPO/$image $harborRegistry/$harborProject/bluedata/$image && docker push $harborRegistry/$harborProject/bluedata/$image && echo "Image push complete - $image"; fi
+      #      - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then docker tag $DEV_REPO/$image bluedata/$image && docker push bluedata/$image && echo "Image push complete to docker hub - $image"; fi
+      #     onSuccess:
+      #       - curl -XPOST -H "Content-Type:application/json" http://incomingwebhk:incomingwebhk@16.0.14.226:8082/pipelines/api/v1/projectIntegrations/18/hook?branch=develop --data "{\"TriggeredByBuild\":\"hpecp-agent\",\"Version\":\"${RELEASE_HPECPAGENT_VERSION}\", \"RemoteAddonBranch\":\"${res_hpecpAgentTestRepo_branchName}\"}"
+      #       - update_commit_status repo_hpecp_agent --message "Build Successful...." --context "$pipeline_name"
+      #       - send_notification notifySMTP --recipients ${res_repo_hpecp_agent_lastAuthorEmail} --subject "$pipeline_name pipeline successful" --body "<b> $pipeline_name successful <br>hpecp-agent static code analysis scan and image Scan Result<br> </b>" --attachments static_code_analysis_report.log image_scan_report.log
+      #       - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then send_notification ezmeral_slack '--text "$pipeline_name Successful...." --recipient "#cp-devops"'; fi
+      #       - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then send_notification notifySMTP --recipients ez-devops@hpe.com --subject "$pipeline_name pipeline successful" --body "<b> $pipeline_name successful <br>hpecp-agent image Scan Result<br> </b>"; fi
+      #     onFailure:
+      #       - update_commit_status repo_hpecp_agent --message "$pipeline_name failed...." --context "$pipeline_name"            
+      #       - send_notification notifySMTP --recipients ${res_repo_hpecp_agent_lastAuthorEmail} --subject "$pipeline_name pipeline failed" --body "<b>$pipeline_name pipeline failed at stage - ${step_name} </b>" --attachments static_code_analysis_report.log
+      #       - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then send_notification ezmeral_slack '--text " $pipeline_name failed...." --recipient "#cp-devops"'; fi
+      #       - if [[ $res_repo_hpecp_agent_isPullRequest == "false" ]] ; then send_notification notifySMTP --recipients ez-devops@hpe.com --subject "$step_name failed" --body "<b>$pipeline_name pipeline failed at stage - ${step_name} </b>"; fi
