@@ -8,7 +8,7 @@ resources:
          include: ^{{gitBranch}}$
       buildOn:
         commit: true
-        pullRequestCreate: true
+#         pullRequestCreate: true
 #       cancelPendingRunsOn:
 #          newCommit: false
 #          pullRequestUpdate: true
