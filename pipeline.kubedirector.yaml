@@ -38,12 +38,12 @@ pipelines:
           inputResources:
             - name: repo_kubedirector
           runtime:
-            type: image
-            image:
-              custom:
-                name: releases-docker.jfrog.io/jfrog/pipelines-c7go
-                tag: "1.17"
-                options: "-v /usr/bin/jf:/usr/bin/jf"
+            type: host
+#             image:
+#               custom:
+#                 name: releases-docker.jfrog.io/jfrog/pipelines-c7go
+#                 tag: "1.17"
+#                 options: "-v /usr/bin/jf:/usr/bin/jf"
         execution:
           # onStart:
           #   - send_notification ezmeral_slack --text "Initiating ${pipeline_name}" --recipient "#cp-devops"
