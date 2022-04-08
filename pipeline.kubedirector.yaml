@@ -9,11 +9,11 @@ resources:
       buildOn:
         commit: true
         pullRequestCreate: true
-      cancelPendingRunsOn:
-         newCommit: false
-         pullRequestUpdate: true
-      pullRequestTargetBranches:
-        include: ^{{gitBranch}}$
+#       cancelPendingRunsOn:
+#          newCommit: false
+#          pullRequestUpdate: true
+#       pullRequestTargetBranches:
+#         include: ^{{gitBranch}}$
 
 pipelines:
   - name: kubedirector_poc
