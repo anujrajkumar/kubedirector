@@ -64,5 +64,5 @@ pipelines:
                 options: "-v /usr/bin/jf:/usr/bin/jf"
         execution:
           onExecute:
-           - cd $res_repo_kubedirector_resourcePath/ && make build
+           - cd $res_repo_kubedirector_resourcePath/ && make pkg/apis/kubedirector/v1beta1/zz_generated.deepcopy.go
            
