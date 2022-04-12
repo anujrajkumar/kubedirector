@@ -45,6 +45,7 @@ pipelines:
             - /usr/bin/jf config add --url=http://bd-jfrog-artifactory.mip.storage.hpecorp.net --interactive=false --access-token $int_xray_token
             - /usr/bin/jf audit --watches 'test_watch' > static_code_analysis_report
             - cat static_code_analysis_report
+            - cat build/Dockerfile
             - add_run_files static_code_analysis_report sast_report
             
       - name: Build
