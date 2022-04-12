@@ -65,7 +65,7 @@ pipelines:
                 options: "-v /usr/bin/jf:/usr/bin/jf"
         execution:
           onExecute:
-           - if [[ ${step_triggered_by_resource_name} == "repo_kubedirector" ]]; then changed_files=compare_git --path $res_repo_kubedirector_resourcePath --commit-range HEAD~1..HEAD); fi
+           - if [[ ${step_triggered_by_resource_name} == "repo_kubedirector" ]]; then changed_files=compare_git --path $res_repo_kubedirector_resourcePath --commit-range HEAD~1..HEAD; fi
            - echo "Changed files  -$changed_files"
            - cd $res_repo_kubedirector_resourcePath/
            - RELEASE_VERSION=v0.15.2
