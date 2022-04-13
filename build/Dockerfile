@@ -5,7 +5,11 @@ ENV OPERATOR=/home/kubedirector/kubedirector \
     USER_NAME=kubedirector \
     USER_HOME=/home/kubedirector
 
-# new chnages 2
+# Support ps, killall, and tar for redeploy.
+RUN microdnf update -y && rm -rf /var/cache/yum; exit 0
+RUN microdnf -y install --nodocs psmisc procps-ng tar \
+    && microdnf clean all; exit 0
+    
 COPY build/bin/entrypoint /usr/local/bin/entrypoint
 COPY build/bin/user_setup /usr/local/bin/user_setup
 RUN chown 0:0 /usr/local/bin/entrypoint && \
