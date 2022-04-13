@@ -17,9 +17,9 @@ pipelines:
       environmentVariables:
         readOnly:
           harborRegistry: "bd-harbor-registry.mip.storage.hpecorp.net"
-          harborProject: "develop"
+          harborProject: "docker-local"
           jfrogRegistry: "bd-jfrog-artifactory.mip.storage.hpecorp.net:80"
-          jfrogProject: "develop"
+          jfrogProject: "docker-local"
       integrations:
         - name: notifySMTP
         - name: jfrog
